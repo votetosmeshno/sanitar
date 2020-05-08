@@ -17,7 +17,8 @@ def start_message(message):
 def help_message(message):
     bot.reply_to(message,
                  'У главного санитара есть несколько функций. Примите ваши таблетки и наслаждайтесь.\nДля начала каждому нужно стать на учет (в ряды пациентов '
-                 'лечебницы) командой /register.\nПосле этого вы можете выбрать психопата дня /todayspsycho и пару дня /psychoshipper')
+                 'лечебницы) командой /register.\nПосле этого вы можете выбрать психопата дня /todayspsycho и пару дня /psychoshipper\nЕще я ежедневно '
+                 'ставлю диагноз по команде /diagnosis')
 
 
 @bot.message_handler(commands=['request'])
@@ -175,5 +176,20 @@ def diagnosis(message):
     bot.reply_to(message, f'Проанализировав твои сообщения, нетрудно догадаться, что твой диагноз - {todaysdiagnosis}')
     now = datetime.date.today()
     write_to_json_diagnosis(message.from_user.id, now.strftime("%m/%d/%Y"), message.chat.id, todaysdiagnosis)
+
+@bot.message_handler(content_types=['new_chat_participant'])
+def greetins(message):
+    bot.reply_to(message, 'Добро пожаловать в нашу частную лечебницу!\n Тебе следует записать себя в список пациентов командой /register\nМожешь узнать обо мне больше по команде /help')
+
+@bot.message_handler(content_types=['text'])
+def random_text(message):
+    randomchoice = random.randrange(0, 100)
+
+    randomtextlist = ["кажется, ты глупый", "думаю, тебе вообще не стоит открывать рот", "ты точно не забыл принять свои таблетки сегодня?",
+                      "я могу посоветовать тебе отличного психотерапевта", "в дурку его!", "с кем ты говоришь? тут никого нет", "с моим хомяком говорить интереснее чем с тобой",
+                      "ты что опять придумал себе друзей?", "ты - мой любимый пациент"]
+    if randomchoice < 10:
+        bot.reply_to(message, random.choice(randomtextlist))
+
 
 bot.polling()
