@@ -198,5 +198,23 @@ def random_text(message):
     if randomchoice < 7:
         bot.reply_to(message, random.choice(randomtextlist))
 
+@bot.message_handler(content_types=['text'])
+def reply_to_psycho(message):
+    f = open('lastTimePlayed.json')
+    data = json.load(f)
+    for l in data:
+        for d in l["todayspsycho"]:
+            now = datetime.date.today()
+            if message.from_user.username == d["username"] and message.chat.id == d["chat_id"] and d["day"] == now.strftime("%m/%d/%Y"):
+                randomchoice = random.randrange(0, 100)
+
+                randomreplytopsycho = ["лови психопата!", "никто не забыл, что это психопат дня?", "психопатов тут не любят", "не зря ты тут психопат дня",
+                                       "а ты свои таблетки принял?", "да, ты точно психопат", "попался! псих!", "ты зачем из палаты убежал?", "а ты сегодня буйный",
+                                       "ты самый крутой психопат дня которого я видел", "думал все забыли что ты психопат дня?", "напоминаю! этот юзер - психопат дня",
+                                       "ты смотри, как психопат дня разбушевался", "психопат дня сегодня не справляеься со своей шизой",
+                                       "а твои голоса в голове сказали тебе, что ты будешь психопатом дня?", "ты мой любимый психопатик"]
+                if randomchoice < 8:
+                    bot.reply_to(message, random.choice(randomreplytopsycho))
+
 
 bot.polling()
