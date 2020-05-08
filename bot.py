@@ -79,7 +79,7 @@ def chooserandomuser(message):
         chooserandomuser(message)
         return
     bot.reply_to(message, f'Господа душевнобольные! \nПсихопатом дня сегодня особенно проявил себя - @{psycho["username"]}')
-    write_to_json_todayspsycho(now.strftime("%m/%d/%Y"), psycho, message.chat.id)
+    write_to_json_todayspsycho(now.strftime("%m/%d/%Y"), psycho['username'], message.chat.id)
 
 def write_to_json_psychoshipper(day, pair, chat_id):
     with open('lastTimeShipping.json', 'r') as jfr:
