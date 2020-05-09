@@ -175,7 +175,7 @@ def diagnosis(message):
     todaysdiagnosis = random.choice(diagnosislist)
     bot.reply_to(message, f'Проанализировав твои сообщения, нетрудно догадаться, что твой диагноз - {todaysdiagnosis}')
     now = datetime.date.today()
-    write_to_json_diagnosis(message.from_user.id, now.strftime("%m/%d/%Y"), message.chat.id, todaysdiagnosis)
+    write_to_json_diagnosis(message.from_user.username, now.strftime("%m/%d/%Y"), message.chat.id, todaysdiagnosis)
 
 @bot.message_handler(content_types=['new_chat_participant'])
 def greetins(message):
@@ -194,7 +194,10 @@ def random_text(message):
                       "опять ты в свои воображаемые игры играешь...", "ну тут только бог поможет", "а ты почему лабки не сделал?", "ну а что вы хотели? в дурке живем",
                       "мем получился очень семейный, а главное религиозный", "быдло", "в таких моментах не стоит ничего говорить, а только кинуть загадочный взгляд "
                       "в мексиканской шляпе", "ха-ха либераху порвало", "ты беспонтовый пирожок", "ясно, автору 0 лет", "осуждаю", "ищи себя в прошмандовках Азейбайджана",
-                      "чем больше женщину мы любим тем больше меньше мы тем чем", "мораль думайте сами", "а пацанчик то реально умер", "а вот это я понимаю мем про каждого из нас!"]
+                      "чем больше женщину мы любим тем больше меньше мы тем чем", "мораль думайте сами", "а пацанчик то реально умер", "а вот это я понимаю мем про каждого из нас!",
+                       "постирония - это шутка, но не шутка. это такие пикчи с чувачками, которые якобы показывают искренность, но нет!братан, постирония - это шутка не шутка. подколы"
+                       "типа автору 8 или 100 лет. рофл, сарказм - синонимы к этому слову. пойми, постирония это не твои картинки с говном.", "братан, я в своем "
+                       "сознании сейчас так преисполнился..."]
     if randomchoice < 7:
         bot.reply_to(message, random.choice(randomtextlist))
 
@@ -216,5 +219,13 @@ def reply_to_psycho(message):
                 if randomchoice < 8:
                     bot.reply_to(message, random.choice(randomreplytopsycho))
 
+@bot.message_handler(content_types=['text'])
+def durka_reply(message):
+    if message.text == 'дурка' or 'дурку' or 'дурке':
+        bot.reply_to(message, "А дурка тут!")
+    if message.text == 'санитар':
+        bot.reply_to(message, 'Санитар на месте!')
+    if message.text == 'бот мертв':
+        bot.reply_to(message, 'не дождешься')
 
 bot.polling()
