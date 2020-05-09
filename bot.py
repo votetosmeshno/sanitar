@@ -138,29 +138,20 @@ def write_to_json_diagnosis(username, day, chat_id, diagnosis):
 
 @bot.message_handler(commands=['diagnosis'])
 def diagnosis(message):
-    f = open('diagnosis.json')
-    data = json.load(f)
-    for l in data:
-        for d in l["diagnosis"]:
-            now = datetime.date.today()
-            if d["username"] == message.from_user.username and d["chat_id"] == message.chat.id and d[
-                "day"] == now.strftime("%m/%d/%Y"):
-                yourtodaysdiagnosis = d["diagnosis"]
-                bot.reply_to(message, f'Ты еще не вылечился:(\n У тебя {yourtodaysdiagnosis}')
-                return
     f = open('pills.json')
     data = json.load(f)
     for l in data:
         for d in l["pills"]:
-            if d["username"] == message.from_user.username and d["chat_id"] == message.chat.id and d["pills"] == "0":
+            now = datetime.date.today()
+            if d["username"] == message.from_user.username and d["chat_id"] == message.chat.id and d["pills"] == "0" and d["day"] == now.strftime("%m/%d/%Y"):
                 f = open('diagnosis.json')
                 data = json.load(f)
                 for l in data:
                     for d in l["diagnosis"]:
                         now = datetime.date.today()
-                        if d["username"] == message.from_user.username and d["chat_id"] == message.chat.id and d["day"] == now.strftime("%m/%d/%Y"):
+                        if d["username"] == message.from_user.username and d["chat_id"] == message.chat.id:
                             yourtodaysdiagnosis = d["diagnosis"]
-                            bot.reply_to(message,f'Ты еще не вылечился:(\nУ тебя {yourtodaysdiagnosis}')
+                            bot.reply_to(message, f'Ты еще не вылечился:(\n У тебя {yourtodaysdiagnosis}')
                             return
 
     diagnosislist = ["депрессивное расстройство", "деменция", "биполярное расстройство", "шизофрения", "деменция",
