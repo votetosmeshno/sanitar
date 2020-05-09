@@ -215,11 +215,11 @@ def random_text(message):
                                        "а твои голоса в голове сказали тебе, что ты будешь психопатом дня?", "ты мой любимый психопатик"]
                 if randomchoice < 8:
                     bot.reply_to(message, random.choice(randomreplytopsycho))
-    if ("дурка" in message.text or "дурку" in message.text or "дурке" in message.text):
+    if ("дурка" in message.text.lower() or "дурку" in message.text.lower() or "дурке" in message.text.lower()):
         bot.reply_to(message, 'А дурка тут!')
-    if ("санитар" in message.text or "санитару" in message.text or "санитара" in message.text):
+    if ("санитар" in message.text.lower() or "санитару" in message.text.lower() or "санитара" in message.text.lower()):
         bot.reply_to(message, 'Санитар на месте.')
-    if ("бот" in message.text):
+    if ("бот" in message.text.lower()):
         bot.reply_to(message, 'Я тут! Я жив!')
 
 bot.polling()
