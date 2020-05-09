@@ -200,9 +200,6 @@ def random_text(message):
                        "сознании сейчас так преисполнился..."]
     if randomchoice < 7:
         bot.reply_to(message, random.choice(randomtextlist))
-
-@bot.message_handler(content_types=['text'])
-def reply_to_psycho(message):
     f = open('lastTimePlayed.json')
     data = json.load(f)
     for l in data:
@@ -218,14 +215,11 @@ def reply_to_psycho(message):
                                        "а твои голоса в голове сказали тебе, что ты будешь психопатом дня?", "ты мой любимый психопатик"]
                 if randomchoice < 8:
                     bot.reply_to(message, random.choice(randomreplytopsycho))
-
-@bot.message_handler(content_types=['text'])
-def durka_reply(message):
-    if message.text == 'дурка' or 'дурку' or 'дурке':
-        bot.reply_to(message, "А дурка тут!")
-    if message.text == 'санитар':
-        bot.reply_to(message, 'Санитар на месте!')
-    if message.text == 'бот мертв':
-        bot.reply_to(message, 'не дождешься')
+    if ("дурка" in message.text or "дурку" in message.text or "дурке" in message.text):
+        bot.reply_to(message, 'А дурка тут!')
+    if ("санитар" in message.text or "санитару" in message.text or "санитара" in message.text):
+        bot.reply_to(message, 'Санитар на месте.')
+    if ("бот" in message.text):
+        bot.reply_to(message, 'Я тут! Я жив!')
 
 bot.polling()
