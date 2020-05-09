@@ -138,6 +138,16 @@ def write_to_json_diagnosis(username, day, chat_id, diagnosis):
 
 @bot.message_handler(commands=['diagnosis'])
 def diagnosis(message):
+    f = open('diagnosis.json')
+    data = json.load(f)
+    for l in data:
+        for d in l["diagnosis"]:
+            now = datetime.date.today()
+            if d["username"] == message.from_user.username and d["chat_id"] == message.chat.id and d[
+                "day"] == now.strftime("%m/%d/%Y"):
+                yourtodaysdiagnosis = d["diagnosis"]
+                bot.reply_to(message, f'Ты еще не вылечился:(\n У тебя {yourtodaysdiagnosis}')
+                return
     f = open('pills.json')
     data = json.load(f)
     for l in data:
@@ -147,9 +157,10 @@ def diagnosis(message):
                 data = json.load(f)
                 for l in data:
                     for d in l["diagnosis"]:
-                        if d["username"] == message.from_user.username and d["chat_id"] == message.chat.id:
+                        now = datetime.date.today()
+                        if d["username"] == message.from_user.username and d["chat_id"] == message.chat.id and d["day"] == now.strftime("%m/%d/%Y"):
                             yourtodaysdiagnosis = d["diagnosis"]
-                            bot.reply_to(message,f'Ты еще не вылечился:(\n У тебя {yourtodaysdiagnosis}')
+                            bot.reply_to(message,f'Ты еще не вылечился:(\nУ тебя {yourtodaysdiagnosis}')
                             return
 
     diagnosislist = ["депрессивное расстройство", "деменция", "биполярное расстройство", "шизофрения", "деменция",
@@ -205,17 +216,20 @@ def take_a_pill(message):
                 bot.reply_to(message, 'Ты сегодня уже принимал таблетку!\nПродолжим лечение завтра!')
                 return
 
-
     amountofpills = random.randrange(1, 11)
-    if amountofpills == 1 or 2 or 3 or 4 or 5 or 6 or 7:
+    if amountofpills <= 6:
         bot.reply_to(message, 'Кажется ты принял не ту таблетку :(\nПопробуй завтра')
         now = datetime.date.today()
         write_to_json_pills(now.strftime("%m/%d/%Y"), message.from_user.username, message.from_user.id, message.chat.id,
                             '0')
+        return
     else:
-        bot.reply_to(message, 'Ура! Ты принял правильную таблетку!\nСтоит узнать, болен ли ты чем-то еще...\nЖми на /diagnosis')
+        bot.reply_to(message,
+                     'Ура! Ты принял правильную таблетку!\nТеперь ты здоров\nСтоит узнать, болен ли ты чем-то еще...\nЖми на /diagnosis')
         now = datetime.date.today()
-        write_to_json_pills(now.strftime("%m/%d/%Y"), message.from_user.username, message.from_user.id, message.chat.id, '1')
+        write_to_json_pills(now.strftime("%m/%d/%Y"), message.from_user.username, message.from_user.id, message.chat.id,
+                            '1')
+        return
 
 
 
