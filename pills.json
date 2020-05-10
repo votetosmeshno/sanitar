@@ -1,0 +1,13 @@
+[
+    {
+        "pills": [
+            {
+                "day": "day",
+                "username": "username",
+                "user_id": "user_id",
+                "chat_id": "chat_id",
+                "pills": "pills"
+            }
+        ]
+    }
+]
