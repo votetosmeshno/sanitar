@@ -142,8 +142,7 @@ def diagnosis(message):
     data = json.load(f)
     for l in data:
         for d in l["pills"]:
-            now = datetime.date.today()
-            if d["username"] == message.from_user.username and d["chat_id"] == message.chat.id and d["pills"] == "0" and d["day"] == now.strftime("%m/%d/%Y"):
+            if d["username"] == message.from_user.username and d["chat_id"] == message.chat.id and d["pills"] == "0":
                 f = open('diagnosis.json')
                 data = json.load(f)
                 for l in data:
@@ -207,19 +206,18 @@ def take_a_pill(message):
                 bot.reply_to(message, 'Ты сегодня уже принимал таблетку!\nПродолжим лечение завтра!')
                 return
 
+
     amountofpills = random.randrange(1, 11)
-    if amountofpills <= 6:
+    if amountofpills <= 7:
         bot.reply_to(message, 'Кажется ты принял не ту таблетку :(\nПопробуй завтра')
         now = datetime.date.today()
         write_to_json_pills(now.strftime("%m/%d/%Y"), message.from_user.username, message.from_user.id, message.chat.id,
                             '0')
         return
     else:
-        bot.reply_to(message,
-                     'Ура! Ты принял правильную таблетку!\nТеперь ты здоров\nСтоит узнать, болен ли ты чем-то еще...\nЖми на /diagnosis')
+        bot.reply_to(message, 'Ура! Ты принял правильную таблетку!\nТеперь ты здоров\nСтоит узнать, болен ли ты чем-то еще...\nЖми на /diagnosis')
         now = datetime.date.today()
-        write_to_json_pills(now.strftime("%m/%d/%Y"), message.from_user.username, message.from_user.id, message.chat.id,
-                            '1')
+        write_to_json_pills(now.strftime("%m/%d/%Y"), message.from_user.username, message.from_user.id, message.chat.id, '1')
         return
 
 
@@ -228,9 +226,30 @@ def take_a_pill(message):
 def greetings(message):
     bot.reply_to(message, 'Добро пожаловать в нашу частную лечебницу!\n Тебе следует записать себя в список пациентов командой /register\nМожешь узнать обо мне больше по команде /help')
 
+def write_to_json_messages(message, chat_id):
+    with open('messages.json', 'r') as jfr:
+        jf_file = json.load(jfr)
+    with open('messages.json', 'w') as jf:
+        jf_target = jf_file[0]['messages']
+        messages_info = {'message': message, 'chat_id': chat_id}
+        jf_target.append(messages_info)
+        json.dump(jf_file, jf, indent=4)
+
+
+
 @bot.message_handler(content_types=['text'])
 def random_text(message):
+    write_to_json_messages(message.text, message.chat.id)
     randomchoice = random.randrange(0, 100)
+    if randomchoice < 4:
+        f = open('messages.json')
+        data = json.load(f)
+        for l in data:
+            for d in l["messages"]:
+                if message.chat.id == d["chat_id"]:
+                    randommessage  = random.choice(data[0]["messages"])
+                    bot.send_message(message.chat.id, randommessage['message'])
+                    return
 
     randomtextlist = ["кажется, ты глупый", "думаю, тебе вообще не стоит открывать рот", "ты точно не забыл принять свои таблетки сегодня?",
                       "я могу посоветовать тебе отличного психотерапевта", "в дурку его!", "с кем ты говоришь? тут никого нет", "с моим хомяком говорить интереснее чем с тобой",
@@ -266,7 +285,5 @@ def random_text(message):
         bot.reply_to(message, 'А дурка тут!')
     if ("санитар" in message.text.lower() or "санитару" in message.text.lower() or "санитара" in message.text.lower()):
         bot.reply_to(message, 'Санитар на месте.')
-    if ("бот" in message.text.lower()):
-        bot.reply_to(message, 'Я тут! Я жив!')
 
 bot.polling()
