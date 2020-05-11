@@ -17,7 +17,7 @@ def start_message(message):
 def help_message(message):
     bot.reply_to(message,
                  'У главного санитара есть несколько функций. Примите ваши таблетки и наслаждайтесь.\nДля начала каждому нужно стать на учет (в ряды пациентов '
-                 'лечебницы) командой /register.\nПосле этого вы можете выбрать психопата дня /todayspsycho и пару дня /psychoshipper\nЕЕще я еставлю диагноз по команде /diagnosis, ты можешь вылечится приняв таблетку /takeapill, если повезет и примешь ту - можешь смело ставить себе новый диагноз! Здоровых у нас нет.')
+                 'лечебницы) командой /register.\nПосле этого вы можете выбрать психопата дня /todayspsycho и пару дня /psychoshipper\nЕще я ставлю диагноз по команде /diagnosis, ты можешь вылечится приняв таблетку /takeapill, если повезет и примешь ту - можешь смело ставить себе новый диагноз! Здоровых у нас нет.')
 
 
 
@@ -186,11 +186,11 @@ def diagnosis(message):
 def write_to_json_pills(day, username, user_id, chat_id, pills):
     with open('pills.json', 'r') as jfr:
         jf_file = json.load(jfr)
-    with open('pills.json', 'w') as jf:
+    with open('pills.json', 'w+') as jf:
         jf_target = jf_file[0]['pills']
         pills_info = {'day': day, 'username': username, 'user_id': user_id, 'chat_id': chat_id, 'pills': pills}
         jf_target.append(pills_info)
-        json.dump(jf_file, jf, indent=4)
+        json.dump(jf_file, jf)
 
 
 
@@ -229,7 +229,7 @@ def greetings(message):
 def write_to_json_messages(message, chat_id):
     with open('messages.json', 'r') as jfr:
         jf_file = json.load(jfr)
-    with open('messages.json', 'w') as jf:
+    with open('messages.json', 'w+') as jf:
         jf_target = jf_file[0]['messages']
         messages_info = {'message': message, 'chat_id': chat_id}
         jf_target.append(messages_info)
@@ -239,17 +239,20 @@ def write_to_json_messages(message, chat_id):
 
 @bot.message_handler(content_types=['text'])
 def random_text(message):
+
     write_to_json_messages(message.text, message.chat.id)
+
     randomchoice = random.randrange(0, 100)
-    if randomchoice < 4:
+    if randomchoice < 5:
         f = open('messages.json')
         data = json.load(f)
         for l in data:
             for d in l["messages"]:
                 if message.chat.id == d["chat_id"]:
-                    randommessage  = random.choice(data[0]["messages"])
-                    bot.send_message(message.chat.id, randommessage['message'])
-                    return
+                    randommessage = random.choice(data[0]["messages"])
+                    if randommessage['chat_id'] == message.chat.id:
+                        bot.send_message(message.chat.id, randommessage['message'])
+                        return
 
     randomtextlist = ["кажется, ты глупый", "думаю, тебе вообще не стоит открывать рот", "ты точно не забыл принять свои таблетки сегодня?",
                       "я могу посоветовать тебе отличного психотерапевта", "в дурку его!", "с кем ты говоришь? тут никого нет", "с моим хомяком говорить интереснее чем с тобой",
@@ -261,10 +264,10 @@ def random_text(message):
                       "мем получился очень семейный, а главное религиозный", "быдло", "в таких моментах не стоит ничего говорить, а только кинуть загадочный взгляд "
                       "в мексиканской шляпе", "ха-ха либераху порвало", "ты беспонтовый пирожок", "ясно, автору 0 лет", "осуждаю", "ищи себя в прошмандовках Азейбайджана",
                       "чем больше женщину мы любим тем больше меньше мы тем чем", "мораль думайте сами", "а пацанчик то реально умер", "а вот это я понимаю мем про каждого из нас!",
-                       "постирония - это шутка, но не шутка. это такие пикчи с чувачками, которые якобы показывают искренность, но нет!братан, постирония - это шутка не шутка. подколы"
+                       "постирония - это шутка, но не шутка. это такие пикчи с чувачками, которые якобы показывают искренность, но нет! братан, постирония - это шутка не шутка. подколы "
                        "типа автору 8 или 100 лет. рофл, сарказм - синонимы к этому слову. пойми, постирония это не твои картинки с говном.", "братан, я в своем "
                        "сознании сейчас так преисполнился..."]
-    if randomchoice < 7:
+    if 5 <= randomchoice <= 7:
         bot.reply_to(message, random.choice(randomtextlist))
     f = open('lastTimePlayed.json')
     data = json.load(f)
@@ -285,5 +288,7 @@ def random_text(message):
         bot.reply_to(message, 'А дурка тут!')
     if ("санитар" in message.text.lower() or "санитару" in message.text.lower() or "санитара" in message.text.lower()):
         bot.reply_to(message, 'Санитар на месте.')
+
+
 
 bot.polling()
