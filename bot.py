@@ -3,6 +3,7 @@ import config
 import random
 import datetime
 import json
+import sqlite3
 
 
 bot = telebot.TeleBot(config.token)
@@ -208,14 +209,14 @@ def take_a_pill(message):
 
 
     amountofpills = random.randrange(1, 11)
-    if amountofpills <= 7:
+    if amountofpills <= 8:
         bot.reply_to(message, 'Кажется ты принял не ту таблетку :(\nПопробуй завтра')
         now = datetime.date.today()
         write_to_json_pills(now.strftime("%m/%d/%Y"), message.from_user.username, message.from_user.id, message.chat.id,
                             '0')
         return
     else:
-        bot.reply_to(message, 'Ура! Ты принял правильную таблетку!\nТеперь ты здоров\nСтоит узнать, болен ли ты чем-то еще...\nЖми на /diagnosis')
+        bot.reply_to(message, 'Ура! Ты принял правильную таблетку!\nНо даже не думай, что ты вылечил все свои беды с башкой...')
         now = datetime.date.today()
         write_to_json_pills(now.strftime("%m/%d/%Y"), message.from_user.username, message.from_user.id, message.chat.id, '1')
         return
@@ -226,33 +227,53 @@ def take_a_pill(message):
 def greetings(message):
     bot.reply_to(message, 'Добро пожаловать в нашу частную лечебницу!\n Тебе следует записать себя в список пациентов командой /register\nМожешь узнать обо мне больше по команде /help')
 
+
 def write_to_json_messages(message, chat_id):
     with open('messages.json', 'r') as jfr:
         jf_file = json.load(jfr)
     with open('messages.json', 'w+') as jf:
-        jf_target = jf_file[0]['messages']
+        jf_target = jf_file[0]["messages"]
         messages_info = {'message': message, 'chat_id': chat_id}
         jf_target.append(messages_info)
         json.dump(jf_file, jf, indent=4)
 
 
 
+
+
 @bot.message_handler(content_types=['text'])
 def random_text(message):
+    con = sqlite3.connect('mydatabase.db')
+    cursorObj = con.cursor()
 
-    write_to_json_messages(message.text, message.chat.id)
+    cursorObj.execute("CREATE TABLE IF NOT EXISTS messages(chat_id integer, message text, user_id integer)")
+
+    con.commit()
+
+    def sql_insert(con, info):
+
+        cursorObj = con.cursor()
+
+        cursorObj.execute('''INSERT INTO messages(chat_id, message, user_id) VALUES(?, ?, ?)''', info)
+
+        con.commit()
+
+    info = (message.chat.id, message.text, message.from_user.id)
+
+    sql_insert(con, info)
+
+    con = sqlite3.connect('mydatabase.db')
+    cursorObj = con.cursor()
+
+    random_choice = cursorObj.execute(f"SELECT message FROM messages WHERE chat_id == {message.chat.id} ORDER BY random() LIMIT 1;")
+    random_choice = cursorObj.fetchone()
 
     randomchoice = random.randrange(0, 100)
-    if randomchoice < 5:
-        f = open('messages.json')
-        data = json.load(f)
-        for l in data:
-            for d in l["messages"]:
-                if message.chat.id == d["chat_id"]:
-                    randommessage = random.choice(data[0]["messages"])
-                    if randommessage['chat_id'] == message.chat.id:
-                        bot.send_message(message.chat.id, randommessage['message'])
-                        return
+    if randomchoice < 4:
+        bot.send_message(message.chat.id, random_choice)
+
+
+
 
     randomtextlist = ["кажется, ты глупый", "думаю, тебе вообще не стоит открывать рот", "ты точно не забыл принять свои таблетки сегодня?",
                       "я могу посоветовать тебе отличного психотерапевта", "в дурку его!", "с кем ты говоришь? тут никого нет", "с моим хомяком говорить интереснее чем с тобой",
@@ -282,7 +303,7 @@ def random_text(message):
                                        "ты самый крутой психопат дня которого я видел", "думал все забыли что ты психопат дня?", "напоминаю! этот юзер - психопат дня",
                                        "ты смотри, как психопат дня разбушевался", "психопат дня сегодня не справляеься со своей шизой",
                                        "а твои голоса в голове сказали тебе, что ты будешь психопатом дня?", "ты мой любимый психопатик"]
-                if randomchoice < 8:
+                if randomchoice < 6:
                     bot.reply_to(message, random.choice(randomreplytopsycho))
     if ("дурка" in message.text.lower() or "дурку" in message.text.lower() or "дурке" in message.text.lower()):
         bot.reply_to(message, 'А дурка тут!')
