@@ -4,7 +4,10 @@ import random
 import datetime
 import json
 import sqlite3
+import re
 
+
+BOT_ID = 1117294158
 
 bot = telebot.TeleBot(config.token)
 
@@ -18,13 +21,17 @@ def start_message(message):
 def help_message(message):
     bot.reply_to(message,
                  'У главного санитара есть несколько функций. Примите ваши таблетки и наслаждайтесь.\nДля начала каждому нужно стать на учет (в ряды пациентов '
-                 'лечебницы) командой /register.\nПосле этого вы можете выбрать психопата дня /todayspsycho и пару дня /psychoshipper\nЕще я ставлю диагноз по команде /diagnosis, ты можешь вылечится приняв таблетку /takeapill, если повезет и примешь ту - можешь смело ставить себе новый диагноз! Здоровых у нас нет.')
+                 'лечебницы) командой /register.\nПосле этого вы можете выбрать психопата дня /todayspsycho и пару дня /psychoshipper\nЕще я ставлю диагноз по команде /diagnosis, ты можешь вылечится приняв таблетку /takeapill, если повезет и примешь ту - можешь смело ставить себе новый диагноз! Здоровых у нас нет\nЯ могу сохранить себе в базу твою легендарную цитату. Для этого реплайни сообщение с тем, что хочешь сохранить командой /save. Бот выводит случайные цитаты пациентов по каманде /quote.')
 
 
 
 @bot.message_handler(commands=['request'])
 def send_updates(message):
     bot.reply_to(message, f'username: {message.from_user.username}\nuser id: {message.from_user.id}')
+
+@bot.message_handler(commands=['contact'])
+def send_contact(message):
+    bot.reply_to(message, 'Бот создан @votetosmeshno. С идеями и вопросами - велкам!\nКстати, можете подписатся на ее канал @rarezhanna\ngithub.com/votetosmeshno/sanitar')
 
 
 def write_to_json_patients(username, user_id, chat_id):
@@ -118,6 +125,14 @@ def randomshipper(message):
     if ship1 == ship2:
         randomshipper(message)
         return
+    if ship1 == None:
+        randomshipper(message)
+        return
+    if ship2 == None:
+        randomshipper(message)
+        return
+
+
     todayspair = f'{ship1["username"]} + {ship2["username"]}'
     bot.reply_to(message,
                  f'Уважаемые пациенты! \nСегодня в нашей лечебнице образовалась новая пара удивительно психически неуравновешеных - '
@@ -134,6 +149,33 @@ def write_to_json_diagnosis(username, day, chat_id, diagnosis):
         diagnosis_info = {'username': username, 'day': day, 'chat_id': chat_id, 'diagnosis': diagnosis}
         jf_target.append(diagnosis_info)
         json.dump(jf_file, jf, indent=4)
+
+def write_to_json_birthday(date, user_id, username, chat_id):
+    with open('birthday.json', 'r') as jfr:
+        jf_file = json.load(jfr)
+    with open('birthday.json', 'w') as jf:
+        jf_target = jf_file[0]['birthday']
+        birthday_info = {'date': date, 'user_id': user_id, 'username': username, 'chat_id': chat_id}
+        jf_target.append(birthday_info)
+        json.dump(jf_file, jf, indent=4)
+
+@bot.message_handler(commands=['birthdayinfo'])
+def birthdayinfo(message):
+    bot.send_message(message.chat.id, 'Если вы хотите создать список с датами рождения пациентов и получать уведомления-напоминания в чате я могу вам помочь!\n'
+                              'Для этого, пожалуйста, напишите в чат сообщение с командой /birthday и датой вашего рождения в формате MM/DD/YY.\nМЕСЯЦ\nДЕНЬ\nГОД\nНапример: /birthday 01/02/03 для 2 января 2003 года\nПостарайтесь не ошибится хотя бы тут.')
+
+@bot.message_handler(commands=['birthday'])
+def birthday(message):
+    f = open('birthday.json')
+    data = json.load(f)
+    for l in data:
+        for d in l["birthday"]:
+            if d["username"] == message.from_user.username and d["chat_id"] == message.chat.id and d["user_id"] == message.from_user.id:
+                bot.reply_to(message, "Я и с первого раза запомнил дату твоего рождения!")
+                return
+    dateofbirth = re.findall("^/birthday (.+)", message.text)[0].strip()
+    write_to_json_birthday(dateofbirth, message.from_user.id, message.from_user.username, message.chat.id)
+    bot.reply_to(message, "Теперь я знаю твою дату рождения!")
 
 
 
@@ -222,23 +264,44 @@ def take_a_pill(message):
         return
 
 
+@bot.message_handler(commands=['stats'])
+def get_stats(message):
+    f = open('diagnosis.json')
+    data = json.load(f)
+    for l in data:
+        for d in l["diagnosis"]:
+            if d["username"] == message.from_user.username and d["chat_id"] == message.chat.id:
+                cured = d["diagnosis"]
+                bot.reply_to(message, f'За время прибывания в лечебнице ты успел вылечить: {cured}')
+                return
+
 
 @bot.message_handler(content_types=['new_chat_participant'])
 def greetings(message):
     bot.reply_to(message, 'Добро пожаловать в нашу частную лечебницу!\n Тебе следует записать себя в список пациентов командой /register\nМожешь узнать обо мне больше по команде /help')
 
 
-def write_to_json_messages(message, chat_id):
-    with open('messages.json', 'r') as jfr:
+
+
+@bot.message_handler(commands=['quote'])
+def send_quote(message):
+    f = open('quotes.json')
+    data = json.load(f)
+    for l in data:
+        for d in l["quotes"]:
+            randomquote = random.choice(l['quotes'])
+            bot.reply_to(message, f"{randomquote['username']} однажды сказал:\n\n{randomquote['message']}")
+            return
+
+
+def write_to_json_quotes(username, message):
+    with open('quotes.json', 'r') as jfr:
         jf_file = json.load(jfr)
-    with open('messages.json', 'w+') as jf:
-        jf_target = jf_file[0]["messages"]
-        messages_info = {'message': message, 'chat_id': chat_id}
-        jf_target.append(messages_info)
+    with open('quotes.json', 'w') as jf:
+        jf_target = jf_file[0]['quotes']
+        quotes_info = {'username': username, 'message': message}
+        jf_target.append(quotes_info)
         json.dump(jf_file, jf, indent=4)
-
-
-
 
 
 @bot.message_handler(content_types=['text'])
@@ -269,7 +332,7 @@ def random_text(message):
     random_choice = cursorObj.fetchone()
 
     randomchoice = random.randrange(0, 100)
-    if randomchoice < 4:
+    if randomchoice < 2:
         bot.send_message(message.chat.id, random_choice)
 
 
@@ -287,8 +350,8 @@ def random_text(message):
                       "чем больше женщину мы любим тем больше меньше мы тем чем", "мораль думайте сами", "а пацанчик то реально умер", "а вот это я понимаю мем про каждого из нас!",
                        "постирония - это шутка, но не шутка. это такие пикчи с чувачками, которые якобы показывают искренность, но нет! братан, постирония - это шутка не шутка. подколы "
                        "типа автору 8 или 100 лет. рофл, сарказм - синонимы к этому слову. пойми, постирония это не твои картинки с говном.", "братан, я в своем "
-                       "сознании сейчас так преисполнился..."]
-    if 5 <= randomchoice <= 7:
+                       "сознании сейчас так преисполнился...", "у тебя отличное чувство юмора", "а ты хорош", 'твои родители случайно не родители?', 'а ты мне нравишься!']
+    if randomchoice == 4:
         bot.reply_to(message, random.choice(randomtextlist))
     f = open('lastTimePlayed.json')
     data = json.load(f)
@@ -302,13 +365,44 @@ def random_text(message):
                                        "а ты свои таблетки принял?", "да, ты точно психопат", "попался! псих!", "ты зачем из палаты убежал?", "а ты сегодня буйный",
                                        "ты самый крутой психопат дня которого я видел", "думал все забыли что ты психопат дня?", "напоминаю! этот юзер - психопат дня",
                                        "ты смотри, как психопат дня разбушевался", "психопат дня сегодня не справляеься со своей шизой",
-                                       "а твои голоса в голове сказали тебе, что ты будешь психопатом дня?", "ты мой любимый психопатик"]
-                if randomchoice < 6:
+                                       "а твои голоса в голове сказали тебе, что ты будешь психопатом дня?", "ты мой любимый психопатик", 'я вижу у тебя сегодня удачный день!', 'ты хороший человек, как ты сюда попал?']
+                if randomchoice < 2:
                     bot.reply_to(message, random.choice(randomreplytopsycho))
     if ("дурка" in message.text.lower() or "дурку" in message.text.lower() or "дурке" in message.text.lower()):
         bot.reply_to(message, 'А дурка тут!')
     if ("санитар" in message.text.lower() or "санитару" in message.text.lower() or "санитара" in message.text.lower()):
         bot.reply_to(message, 'Санитар на месте.')
+
+
+    if message.text == "/save" and message.reply_to_message is not None:
+        if message.reply_to_message.text == None:
+            bot.reply_to(message, "Я не могу сохранить это сообщение.")
+            return
+        elif message.reply_to_message.text[0] == "/":
+            bot.reply_to(message, "Мне незачем сохранять сообщение-команду")
+            return
+        elif message.reply_to_message.from_user.username == None:
+            bot.reply_to(message, "Я не смогу правильно процитировать это чудесное сообщение, ведь у автора нет юзернейма")
+            return
+        else:
+            write_to_json_quotes(message.reply_to_message.from_user.username, message.reply_to_message.text)
+            bot.reply_to(message, "Я запомнил!")
+            return
+
+    angryuser = ['не кричи на меня так, я еще маленький', "я еще только учусь и обещаю быть лучше", "сквернословие - грех", "я обещаю тебе больше так не делать", "чем я тебя обидел?"]
+
+
+    if ("отстань" in message.text.lower() or "пошел нахуй" in message.text.lower() or "иди нахуй" in message.text.lower() or "заебал" in message.text.lower() or "нахуй" in message.text.lower() or "сука" in message.text.lower()) and message.reply_to_message.from_user.id == BOT_ID:
+        bot.reply_to(message, random.choice(angryuser))
+        return
+
+
+
+
+
+
+
+
 
 
 
