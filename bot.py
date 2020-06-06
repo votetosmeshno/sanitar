@@ -7,6 +7,7 @@ import sqlite3
 import re
 
 
+
 BOT_ID = 1117294158
 
 bot = telebot.TeleBot(config.token)
@@ -159,6 +160,11 @@ def write_to_json_birthday(date, user_id, username, chat_id):
         jf_target.append(birthday_info)
         json.dump(jf_file, jf, indent=4)
 
+
+
+
+
+
 @bot.message_handler(commands=['birthdayinfo'])
 def birthdayinfo(message):
     bot.send_message(message.chat.id, 'Если вы хотите создать список с датами рождения пациентов и получать уведомления-напоминания в чате я могу вам помочь!\n'
@@ -207,6 +213,7 @@ def birthday(message):
     else:
         bot.reply_to(message, "Не похоже на настоящую дату рождения!\nНапиши правильно.")
         return
+
 
 
 
@@ -344,6 +351,17 @@ def write_to_json_quotes(username, message):
         json.dump(jf_file, jf, indent=4)
 
 
+def write_to_json_checkbirthday(username, user_id, chat_id):
+    with open('checkbirthday.json', 'r') as jfr:
+        jf_file = json.load(jfr)
+    with open('checkbirthday.json', 'w') as jf:
+        jf_target = jf_file[0]['checkbirthday']
+        checkbirthday_info = {'username': username, 'user_id': user_id, 'chat_id': chat_id}
+        jf_target.append(checkbirthday_info)
+        json.dump(jf_file, jf, indent=4)
+
+
+
 @bot.message_handler(content_types=['text'])
 def random_text(message):
     now = datetime.datetime.now()
@@ -432,9 +450,24 @@ def random_text(message):
             return
 
 
-
-
-
+    f = open('birthday.json')
+    data = json.load(f)
+    for l in data:
+        for d in l["birthday"]:
+            if d['chat_id'] == message.chat.id:
+                splitdate = d['date'].split('/')
+                now = datetime.datetime.now()
+                strfnowday = now.strftime('%d')
+                strfnowmonth = now.strftime('%m')
+                if splitdate[0] == strfnowday and splitdate[1] == strfnowmonth:
+                    f = open('checkbirthday.json')
+                    data = json.load(f)
+                    for l in data:
+                        for m in l["checkbirthday"]:
+                            if m['chat_id'] == message.chat.id and d['username'] == m['username']:
+                                return
+                    bot.send_message(message.chat.id, f'У одного из пациентов сегодня день рождения!\nПоздравим @{d["username"]}')
+                    write_to_json_checkbirthday(d['username'], d['user_id'], d['chat_id'])
 
 
 
