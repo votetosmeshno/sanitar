@@ -162,7 +162,20 @@ def write_to_json_birthday(date, user_id, username, chat_id):
 @bot.message_handler(commands=['birthdayinfo'])
 def birthdayinfo(message):
     bot.send_message(message.chat.id, 'Если вы хотите создать список с датами рождения пациентов и получать уведомления-напоминания в чате я могу вам помочь!\n'
-                              'Для этого, пожалуйста, напишите в чат сообщение с командой /birthday и датой вашего рождения в формате MM/DD/YY.\nМЕСЯЦ\nДЕНЬ\nГОД\nНапример: /birthday 01/02/03 для 2 января 2003 года\nПостарайтесь не ошибится хотя бы тут.')
+                              'Для этого, пожалуйста, напишите в чат сообщение с командой /birthday и датой вашего рождения в формате DD/MM.\nНапример: /birthday 01/02 для 1 февраля\nПостарайтесь не ошибиться.')
+
+    f = open('birthday.json')
+    data = json.load(f)
+    s = ""
+    for l in data:
+        for d in l["birthday"]:
+            if d['chat_id'] == message.chat.id:
+                s += d['username'] + ' : ' + d['date'] + '\n'
+    if s == '':
+        return
+    bot.reply_to(message, "Вот дни рождения всех зарегестрированых пользователей в этом чате! ")
+    bot.send_message(message.chat.id , s)
+
 
 @bot.message_handler(commands=['birthday'])
 def birthday(message):
@@ -170,12 +183,33 @@ def birthday(message):
     data = json.load(f)
     for l in data:
         for d in l["birthday"]:
-            if d["username"] == message.from_user.username and d["chat_id"] == message.chat.id and d["user_id"] == message.from_user.id:
+            if d["chat_id"] == message.chat.id and d["user_id"] == message.from_user.id:
                 bot.reply_to(message, "Я и с первого раза запомнил дату твоего рождения!")
                 return
-    dateofbirth = re.findall("^/birthday (.+)", message.text)[0].strip()
-    write_to_json_birthday(dateofbirth, message.from_user.id, message.from_user.username, message.chat.id)
-    bot.reply_to(message, "Теперь я знаю твою дату рождения!")
+    try:
+        dateofbirth = re.findall("^/birthday (.+)", message.text)[0].strip()
+    except:
+        bot.reply_to(message, "Не тыкай бота просто так.")
+        return
+
+    if '/' in dateofbirth:
+        splitdate = dateofbirth.split('/')
+        if int(splitdate[0]) > 31 or int(splitdate[0]) == 0:
+            bot.reply_to(message, "Не похоже на настоящую дату рождения!\nНапиши правильно.")
+            return
+        elif int(splitdate[1]) > 12 or int(splitdate[1]) == 0:
+            bot.reply_to(message, "Не похоже на настоящую дату рождения!\nНапиши правильно.")
+            return
+        else:
+            write_to_json_birthday(dateofbirth, message.from_user.id, message.from_user.username, message.chat.id)
+            bot.reply_to(message, "Теперь я знаю твою дату рождения!")
+            return
+    else:
+        bot.reply_to(message, "Не похоже на настоящую дату рождения!\nНапиши правильно.")
+        return
+
+
+
 
 
 
@@ -268,12 +302,18 @@ def take_a_pill(message):
 def get_stats(message):
     f = open('diagnosis.json')
     data = json.load(f)
+    s = ''
     for l in data:
         for d in l["diagnosis"]:
             if d["username"] == message.from_user.username and d["chat_id"] == message.chat.id:
-                cured = d["diagnosis"]
-                bot.reply_to(message, f'За время прибывания в лечебнице ты успел вылечить: {cured}')
-                return
+                s += d['diagnosis'] + '\n'
+    bot.reply_to(message, f'За время прибывания в лечебнице ты успел вылечить:\n' + s)
+    return
+
+    if s == '':
+        bot.reply_to(message, "У тебя еще не было болезней...\nВремя поставить себе диагноз!")
+
+
 
 
 @bot.message_handler(content_types=['new_chat_participant'])
@@ -306,23 +346,25 @@ def write_to_json_quotes(username, message):
 
 @bot.message_handler(content_types=['text'])
 def random_text(message):
+    now = datetime.datetime.now()
+    strfnow = now.strftime('%Y-%m-%d %H:%M')
+    date = datetime.datetime.fromtimestamp(message.date)
+    strfdate = date.strftime('%Y-%m-%d %H:%M')
+
+    if strfnow != strfdate:
+        return
+
     con = sqlite3.connect('mydatabase.db')
     cursorObj = con.cursor()
-
     cursorObj.execute("CREATE TABLE IF NOT EXISTS messages(chat_id integer, message text, user_id integer)")
-
     con.commit()
 
     def sql_insert(con, info):
-
         cursorObj = con.cursor()
-
         cursorObj.execute('''INSERT INTO messages(chat_id, message, user_id) VALUES(?, ?, ?)''', info)
-
         con.commit()
 
     info = (message.chat.id, message.text, message.from_user.id)
-
     sql_insert(con, info)
 
     con = sqlite3.connect('mydatabase.db')
@@ -389,12 +431,6 @@ def random_text(message):
             bot.reply_to(message, "Я запомнил!")
             return
 
-    angryuser = ['не кричи на меня так, я еще маленький', "я еще только учусь и обещаю быть лучше", "сквернословие - грех", "я обещаю тебе больше так не делать", "чем я тебя обидел?"]
-
-
-    if ("отстань" in message.text.lower() or "пошел нахуй" in message.text.lower() or "иди нахуй" in message.text.lower() or "заебал" in message.text.lower() or "нахуй" in message.text.lower() or "сука" in message.text.lower()) and message.reply_to_message.from_user.id == BOT_ID:
-        bot.reply_to(message, random.choice(angryuser))
-        return
 
 
 
